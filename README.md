@@ -45,7 +45,7 @@ This project provides an **interactive HTML** page that teaches how **XOR** (exc
 
 1. **Clone or Download** this repository from GitHub:
    ```bash
-   git clone https://github.com/presack/your-xor-raid-demo.git
+   git clone https://github.com/presack/xor-raid-demo.git
   
 
 ## Motivation
