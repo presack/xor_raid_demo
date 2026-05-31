@@ -47,10 +47,10 @@ This project provides an **interactive HTML** page that teaches how **XOR** (exc
    ```bash
    git clone https://github.com/presack/xor-raid-demo.git
    ```
+2. Open `xor_raid_demo.html` in any browser — no build step or server needed.
 
-Or simply access the demo hosted on Github pages:
-   https://presack.github.io/xor_raid_demo/xor_raid_demo.html
-  
+Or access the demo hosted on GitHub Pages:
+https://presack.github.io/xor_raid_demo/xor_raid_demo.html
 
 ## Motivation
    - Ideal for teachers wanting to demonstrate bitwise operations and data redundancy in a RAID system.
