@@ -5,160 +5,208 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>XOR RAID Demo</title>
   <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #000000;
+      --border: #333;
+      --cell-bg: #ffffff;
+      --input-bg: #ffffff;
+      --lesson-bg: #f9f9f9;
+      --lesson-border: #ccc;
+      --btn-bg: #efefef;
+      --btn-fg: #000000;
+      --btn-border: #999;
+      --btn-disabled-opacity: 0.38;
+    }
+    [data-theme="dark"] {
+      --bg: #1a1a2e;
+      --fg: #e0e0e0;
+      --border: #666;
+      --cell-bg: #16213e;
+      --input-bg: #0f3460;
+      --lesson-bg: #16213e;
+      --lesson-border: #555;
+      --btn-bg: #0f3460;
+      --btn-fg: #e0e0e0;
+      --btn-border: #555;
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       font-family: 'Courier New', Courier, monospace;
       text-align: center;
       margin: 20px;
-    }
-    h2 {
-      margin-bottom: 20px;
-    }
-    table {
-      margin: 0 auto;
-      border-collapse: collapse;
-    }
-    td {
-      border: 1px solid #333;
-      width: 40px;
-      height: 40px;
-      text-align: center;
-      vertical-align: middle;
-      padding: 5px;
+      background: var(--bg);
+      color: var(--fg);
+      transition: background 0.2s, color 0.2s;
     }
 
-    /* Center the drive labels */
-    .driveLabel {
-      width: 160px;
-      text-align: center;
-      font-weight: bold;
-      position: relative;
+    h2 { margin-bottom: 10px; }
+
+    /* Top bar: mode + dark mode */
+    .top-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      font-size: 13px;
     }
-    .controls {
-      margin-top: 20px;
+    .top-bar select, .top-bar button {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 4px 10px;
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border: 1px solid var(--btn-border);
+      cursor: pointer;
+      border-radius: 4px;
     }
-    .input {
-      width: 30px;
-      text-align: center;
-      display: inline-block;
-      -webkit-appearance: none;
-      outline: none;
-      border: 1px solid #333;
+    .top-bar label { color: var(--fg); }
+
+    /* Step indicator */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: 12px auto;
+      flex-wrap: wrap;
+    }
+    .step {
+      padding: 3px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--fg);
+      opacity: 0.32;
+      transition: opacity 0.2s, background 0.2s;
+    }
+    .step.active {
+      opacity: 1;
+      background: #2563eb;
+      color: #fff;
+      border-color: #2563eb;
+    }
+    .step.done {
+      opacity: 0.75;
+      background: #16a34a;
+      color: #fff;
+      border-color: #16a34a;
     }
 
-    /* Highlight animations for inputs/cells */
-    .correctInput {
-      animation: fadeCorrect 1.5s ease forwards;
-    }
-    .wrongInput {
-      animation: fadeWrong 1.5s ease forwards;
-    }
-    .correctCell {
-      animation: fadeCorrect 1.5s ease forwards;
-    }
-    .failedCell {
-      animation: fadeFailure 1.5s ease forwards;
-    }
-
-    @keyframes fadeCorrect {
-      0% {
-        background-color: #ccffcc;
-        border: 2px solid #00cc00;
-      }
-      60% {
-        background-color: #ffffff;
-        border: 1px solid #333;
-      }
-      100% {
-        background-color: #ffffff;
-        border: 1px solid #333;
-        outline: none;
-      }
-    }
-    @keyframes fadeWrong {
-      0% {
-        background-color: #ffcccc;
-        border: 2px solid #ff3333;
-      }
-      60% {
-        background-color: #ffffff;
-        border: 1px solid #ccc;
-      }
-      100% {
-        background-color: #ffffff;
-        border: 1px solid #ccc;
-        outline: none;
-      }
-    }
-    @keyframes fadeFailure {
-      0% {
-        background-color: #ffcccc;
-        border: 2px solid #ff0000;
-      }
-      70% {
-        background-color: #ffffff;
-        border: 1px solid #333;
-      }
-      100% {
-        background-color: #ffffff;
-        border: 1px solid #333;
-        outline: none;
-      }
-    }
-
-    /* Status messages */
-    .status-correct {
-      color: green;
-      font-weight: bold;
-      font-size: 1.2em; 
-    }
-    .status-wrong {
-      color: red;
-      font-weight: bold;
-    }
-    .failedInput {
-      color: red;
-    }
-
-    /* Lesson toggle container */
+    /* Lesson toggle — CSS arrow via ::before */
     #lessonToggle {
       width: 80%;
-      margin: 20px auto;
+      margin: 18px auto;
       text-align: left;
       font-size: 14px;
       cursor: pointer;
       user-select: none;
       display: flex;
       align-items: center;
+      color: var(--fg);
     }
-    #lessonToggle .arrow {
+    #lessonToggle::before {
+      content: '▼';
       margin-right: 8px;
-      font-weight: bold;
-      font-size: 18px;
+      font-size: 16px;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+    #lessonToggle.closed::before {
+      transform: rotate(-90deg);
     }
 
-    /* Lesson content box */
     #lessonInfo {
       width: 80%;
       margin: 0 auto 20px auto;
       text-align: left;
       font-size: 14px;
       line-height: 1.4;
-      border: 1px solid #ccc;
+      border: 1px solid var(--lesson-border);
       padding: 10px;
-      background-color: #f9f9f9;
+      background: var(--lesson-bg);
+      color: var(--fg);
     }
-    #lessonInfo h3 {
-      margin-top: 0;
+    #lessonInfo h3 { margin-top: 0; }
+
+    /* Tables */
+    .tableWrapper {
+      overflow-x: auto;
+      margin: 0 auto;
+    }
+    table {
+      margin: 0 auto;
+      border-collapse: collapse;
+    }
+    td {
+      border: 1px solid var(--border);
+      width: 40px;
+      height: 40px;
+      text-align: center;
+      vertical-align: middle;
+      padding: 5px;
+      background: var(--cell-bg);
+      color: var(--fg);
+    }
+    .driveLabel {
+      width: 190px;
+      text-align: center;
+      font-weight: bold;
     }
 
-    /* Blurred bits in the archive row (revealed on hover) */
-    .blurred {
-      filter: blur(6px);
-      transition: filter 0.3s ease;
+    /* Bit inputs */
+    .bitInput {
+      width: 30px;
+      text-align: center;
+      display: inline-block;
+      -webkit-appearance: none;
+      outline: none;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      color: var(--fg);
+      font-family: inherit;
+      font-size: inherit;
     }
-    .archiveRow:hover .blurred {
-      filter: blur(0);
+
+    /* Animations */
+    .correctInput { animation: fadeCorrect 1.5s ease forwards; }
+    .wrongInput   { animation: fadeWrong  1.5s ease forwards; }
+    .correctCell  { animation: fadeCorrect 1.5s ease forwards; }
+    .failedCell   { animation: fadeFailure 1.5s ease forwards; }
+    .hlCell       { animation: fadeHighlight 0.7s ease forwards; }
+
+    @keyframes fadeCorrect {
+      0%   { background: #ccffcc; border: 2px solid #00cc00; }
+      60%  { background: var(--cell-bg); border: 1px solid var(--border); }
+      100% { background: var(--cell-bg); border: 1px solid var(--border); outline: none; }
     }
+    @keyframes fadeWrong {
+      0%   { background: #ffcccc; border: 2px solid #ff3333; }
+      60%  { background: var(--cell-bg); border: 1px solid var(--lesson-border); }
+      100% { background: var(--cell-bg); border: 1px solid var(--lesson-border); outline: none; }
+    }
+    @keyframes fadeFailure {
+      0%   { background: #ffcccc; border: 2px solid #ff0000; }
+      70%  { background: var(--cell-bg); border: 1px solid var(--border); }
+      100% { background: var(--cell-bg); border: 1px solid var(--border); outline: none; }
+    }
+    @keyframes fadeHighlight {
+      0%   { background: #fef9c3; border: 2px solid #f59e0b; }
+      100% { background: var(--cell-bg); border: 1px solid var(--border); }
+    }
+
+    /* Status */
+    #status { margin-top: 20px; min-height: 1.5em; }
+    .status-correct { color: #16a34a; font-weight: bold; font-size: 1.2em; }
+    .status-wrong   { color: #dc2626; font-weight: bold; }
+    .failedInput    { color: red; }
+
+    /* Archive row */
+    .blurred { filter: blur(6px); transition: filter 0.3s ease; }
+    .archiveRow:hover .blurred { filter: blur(0); }
     .eyeIcon {
       font-size: 18px;
       cursor: pointer;
@@ -166,14 +214,47 @@
       margin-left: 4px;
       opacity: 0.7;
     }
-    .eyeIcon:hover {
-      opacity: 1.0;
+    .eyeIcon:hover { opacity: 1; }
+
+    /* Controls */
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+    }
+    .controls button {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 6px 14px;
+      background: var(--btn-bg);
+      color: var(--btn-fg);
+      border: 1px solid var(--btn-border);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: opacity 0.2s;
+    }
+    .controls button:disabled {
+      opacity: var(--btn-disabled-opacity);
+      cursor: not-allowed;
     }
 
-    /* Mobile: let tables scroll horizontally */
-    .tableWrapper {
-      overflow-x: auto;
-      margin: 0 auto;
+    /* XOR walkthrough status line */
+    #walkthroughDisplay {
+      margin: 10px auto;
+      font-size: 13px;
+      min-height: 1.4em;
+      color: var(--fg);
+    }
+
+    /* Print: show only the tables */
+    @media print {
+      .controls, #lessonToggle, #lessonInfo, .step-indicator,
+      .top-bar, #walkthroughDisplay, #status { display: none !important; }
+      .tableWrapper { overflow: visible; }
+      .blurred { filter: none; }
+      body { margin: 0; }
     }
   </style>
 </head>
@@ -181,414 +262,547 @@
 
 <h2>XOR RAID Demonstration</h2>
 
-<!-- Toggle container for lesson info -->
-<div id="lessonToggle" onclick="toggleLesson()">
-  <span class="arrow" id="lessonArrow">▼</span> 
-  <strong>Lesson Info</strong>
+<div class="top-bar">
+  <label>
+    Mode:
+    <select id="modeSelect">
+      <option value="2">2-Drive RAID</option>
+      <option value="3">3-Drive RAID</option>
+    </select>
+  </label>
+  <button id="darkModeBtn">Dark Mode</button>
+  <button id="printBtn">Print Worksheet</button>
 </div>
 
-<!-- Lesson content (initially visible) -->
+<div class="step-indicator">
+  <span class="step" id="step1">1. Generate Drives</span>
+  <span class="step" id="step2">2. Check Parity</span>
+  <span class="step" id="step3">3. Simulate Failure</span>
+  <span class="step" id="step4">4. Recover Drive</span>
+</div>
+
+<div id="lessonToggle"><strong>Lesson Info</strong></div>
+
 <div id="lessonInfo">
-  <h3>About XOR & RAID</h3>
+  <h3>About XOR &amp; RAID</h3>
   <p>
-    <strong>XOR (exclusive OR)</strong> is a fundamental bitwise function. 
-    For any two bits, XOR returns 1 if exactly one bit is 1, and 0 otherwise. 
-    Some key properties:
+    <strong>XOR (exclusive OR)</strong> is a fundamental bitwise operation.
+    For any two bits, XOR returns 1 if exactly one bit is 1, and 0 otherwise.
+    Key properties:
     <ul>
       <li><strong>x ^ x = 0</strong> (any value XOR itself yields 0)</li>
-      <li><strong>x ^ 0 = x</strong> (any value XOR 0 is the value itself)</li>
+      <li><strong>x ^ 0 = x</strong> (any value XOR 0 is itself)</li>
       <li><strong>x ^ y = y ^ x</strong> (XOR is commutative)</li>
     </ul>
-    Learn more in this 
-    <a href="https://en.wikipedia.org/wiki/Exclusive_or" target="_blank">Wikipedia article on XOR</a>.
+    Learn more in the <a href="https://en.wikipedia.org/wiki/Exclusive_or" target="_blank">Wikipedia article on XOR</a>.
   </p>
   <p>
-    In <strong>RAID</strong> (<em>Redundant Array of Independent Disks</em>), 
-    XOR is often used to generate parity data. This means if one drive fails, 
-    the missing data can be reconstructed by XORing the remaining drives’ bits. 
-    See the 
-    <a href="https://en.wikipedia.org/wiki/RAID" target="_blank">Wikipedia article on RAID</a> 
-    for details, or check out this 
-    <a href="https://www.youtube.com/watch?v=3Kvv7VEM3uc" target="_blank">
-    XOR video explanation</a> and <a href="https://www.youtube.com/watch?v=IbXPFB1kKuA" target="_blank">
-    RAID video explanation</a> from the "Gary Explains" YouTube channel for a visual demo.
+    In <strong>RAID</strong> (<em>Redundant Array of Independent Disks</em>),
+    XOR generates parity data so that a failed drive can be reconstructed.
+    In 2-drive mode: <code>Parity = D1 ^ D2</code>.
+    In 3-drive mode: <code>Parity = D1 ^ D2 ^ D3</code>.
+    Recovering any single failed drive (including the parity drive) uses the same XOR:
+    XOR all surviving drives together.
+    See the <a href="https://en.wikipedia.org/wiki/RAID" target="_blank">Wikipedia article on RAID</a>,
+    or the <a href="https://www.youtube.com/watch?v=3Kvv7VEM3uc" target="_blank">XOR video</a> and
+    <a href="https://www.youtube.com/watch?v=IbXPFB1kKuA" target="_blank">RAID video</a>
+    from the "Gary Explains" YouTube channel.
   </p>
   <p>
     <strong>How to use this page:</strong>
     <ul>
-      <li><strong>Generate Drives</strong> to create random bits for Drive&nbsp;1 and Drive&nbsp;2.</li>
-      <li><strong>Check Parity Answers</strong> to verify your XOR-based parity calculations.</li>
-      <li><strong>Simulate Drive Failure</strong> (a red flash) to mimic a failing drive that you can then repair.</li>
-      <li><strong>Check Drive Recovery</strong> to see a rolling highlight if your manual repair is correct.</li>
+      <li><strong>Generate Drives</strong> — fills each data drive with random bits. You can edit any cell manually before checking parity.</li>
+      <li><strong>Check Parity</strong> — enter your XOR calculations in the Parity row, then verify.</li>
+      <li><strong>Show XOR Steps</strong> — watch the parity get computed one bit at a time.</li>
+      <li><strong>Simulate Drive Failure</strong> — any drive (including the parity drive) may fail; recover it using the survivors.</li>
+      <li><strong>Check Drive Recovery</strong> — verify your repair with an animated rollthrough.</li>
+      <li><strong>Print Worksheet</strong> — prints the current table for offline use.</li>
     </ul>
   </p>
 </div>
 
-<!-- Main table: Drive 1, Drive 2, Parity Drive -->
 <div class="tableWrapper">
-  <table>
-    <tr id="drive1Row"></tr>
-    <tr id="drive2Row"></tr>
-    <tr id="parityRow"></tr>
-  </table>
+  <table id="mainTable"></table>
 </div>
 
-<!-- Archive table for the failed drive's original bits -->
 <div class="tableWrapper">
   <table style="margin-top: 20px; display: none;" id="archiveTable">
     <tr id="archiveRow"></tr>
   </table>
 </div>
 
+<div id="walkthroughDisplay"></div>
+
 <div class="controls">
-  <button onclick="generateDrives()">Generate Drives</button>
-  <button onclick="checkParity()">Check Parity Answers</button>
-  <button onclick="simulateFailure()">Simulate Drive Failure</button>
-  <button onclick="checkDriveRecovery()">Check Drive Recovery</button>
+  <button id="btnGenerate">Generate Drives</button>
+  <button id="btnCheckParity"   disabled>Check Parity</button>
+  <button id="btnWalkthrough"   disabled>Show XOR Steps</button>
+  <button id="btnSimFail"       disabled>Simulate Drive Failure</button>
+  <button id="btnCheckRecovery" disabled>Check Drive Recovery</button>
 </div>
 
-<div id="status" style="margin-top: 20px;"></div>
+<div id="status"></div>
 
 <script>
-let drive1 = [];
-let drive2 = [];
-let parity = [];
-let failedDrive = null;
-let failedDriveBits = [];
-let lessonOpen = true;
-let drivesGenerated = false;
-let parityVerified = false;
+// ─── State ────────────────────────────────────────────────────────────────────
 
-function toggleLesson() {
-  const info = document.getElementById('lessonInfo');
-  const arrow = document.getElementById('lessonArrow');
-  lessonOpen = !lessonOpen;
-  if (lessonOpen) {
-    // show lesson, arrow down
-    info.style.display = 'block';
-    arrow.textContent = '▼';
-  } else {
-    // hide lesson, arrow right
-    info.style.display = 'none';
-    arrow.textContent = '►';
-  }
+const state = {
+  numDrives: 2,
+  drives: [],           // bit arrays, one per data drive
+  parity: [],           // correct parity (computed from drives at check/walkthrough time)
+  failedDriveIdx: null, // 0..numDrives-1, or 'parity'
+  archivedBits: [],
+  drivesGenerated: false,
+  parityVerified: false,
+  lessonOpen: true,
+  darkMode: false,
+  walkthroughActive: false,
+};
+
+const NUM_BITS = 8;
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function setStatus(html) {
+  document.getElementById('status').innerHTML = html;
 }
 
-/** Generate random bits for Drive 1 & 2, plus an editable Parity row. */
-function generateDrives() {
-  drive1 = Array.from({ length: 8 }, () => Math.round(Math.random()));
-  drive2 = Array.from({ length: 8 }, () => Math.round(Math.random()));
-  parity = drive1.map((bit, i) => bit ^ drive2[i]);
-
-  displayBits('drive1Row', 'Drive 1', drive1, false);
-  displayBits('drive2Row', 'Drive 2', drive2, false);
-  displayBits('parityRow', 'Parity Drive', Array(8).fill('?'), true);
-
-  // Hide the archived row if previously used
-  document.getElementById('archiveTable').style.display = 'none';
-  document.getElementById('archiveRow').innerHTML = '';
-
-  failedDrive = null;
-  failedDriveBits = [];
-  drivesGenerated = true;
-  parityVerified = false;
-
-  document.getElementById('status').innerText =
-    'New drives generated. Enter XOR values for the Parity Drive row above.';
-
-  // Auto-focus on first parity cell
-  focusCell('parityRow', 0, true);
-
-  // Auto-hide the lesson if it's currently open
-  if (lessonOpen) {
-    toggleLesson();
-  }
+function driveLabel(idx) {
+  return `Drive ${idx + 1}`;
 }
+
+/** XOR all data drive inputs together to get the correct parity. */
+function computeParity() {
+  const bits = Array(NUM_BITS).fill(0);
+  for (let d = 0; d < state.numDrives; d++) {
+    for (let i = 0; i < NUM_BITS; i++) {
+      const el = document.getElementById(`driveRow${d}-${i}`);
+      const v = el ? parseInt(el.value, 10) : state.drives[d][i];
+      bits[i] ^= (isNaN(v) ? 0 : v);
+    }
+  }
+  return bits;
+}
+
+function focusCell(rowId, index) {
+  const el = document.getElementById(`${rowId}-${index}`);
+  if (el) { el.focus(); el.select(); }
+}
+
+function updateStepIndicator() {
+  const ids   = ['step1', 'step2', 'step3', 'step4'];
+  const isDone = [
+    state.drivesGenerated,
+    state.parityVerified,
+    state.failedDriveIdx !== null,
+    false, // step 4 "done" is set directly by rollingRecoveryHighlight
+  ];
+  ids.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active', 'done');
+    if (isDone[i]) el.classList.add('done');
+  });
+  const firstOpen = isDone.indexOf(false);
+  if (firstOpen !== -1) document.getElementById(ids[firstOpen]).classList.add('active');
+}
+
+function updateButtons() {
+  const g = state.drivesGenerated;
+  const p = state.parityVerified;
+  const f = state.failedDriveIdx !== null;
+  const w = state.walkthroughActive;
+  document.getElementById('btnCheckParity').disabled   = !g || p;
+  document.getElementById('btnWalkthrough').disabled   = !g || p || w;
+  document.getElementById('btnSimFail').disabled       = !p;
+  document.getElementById('btnCheckRecovery').disabled = !f;
+}
+
+// ─── Rendering ────────────────────────────────────────────────────────────────
 
 /**
- * Renders bits into a row. 
- * - If isInput=true, we create textboxes for each bit.
- * - Otherwise, we create static text cells.
- * - customClass applies a CSS class to each cell or input.
+ * Renders a table row identified by rowId.
+ * isInput: true → <input> cells; false → static text cells.
+ * customClass is applied to each cell or input.
  */
-function displayBits(rowId, label, bits, isInput, customClass = '') {
+function renderRow(rowId, label, bits, isInput, customClass = '') {
   const row = document.getElementById(rowId);
-  let html = `<td class='driveLabel'>${label}</td>`;
-
+  if (!row) return;
+  let html = `<td class="driveLabel">${label}</td>`;
   bits.forEach((bit, i) => {
     if (isInput) {
-      const val = bit === 'X' ? 'X' : bit;
-      html += `
-        <td>
-          <input class="input ${customClass}"
-                 id="${rowId}-${i}"
-                 maxlength="1"
-                 value="${val}"
-                 oninput="handleFailedInputChange(this)"
-                 onkeydown="handleKeyDown(event, '${rowId}', ${i})">
-        </td>`;
+      html += `<td><input class="bitInput ${customClass}"
+                          id="${rowId}-${i}"
+                          data-rowid="${rowId}"
+                          data-index="${i}"
+                          maxlength="1"
+                          value="${bit}"/></td>`;
     } else {
-      // static text cell
-      if (customClass) {
-        html += `<td class='${customClass}'>${bit}</td>`;
-      } else {
-        html += `<td>${bit}</td>`;
-      }
+      html += customClass
+        ? `<td class="${customClass}">${bit}</td>`
+        : `<td>${bit}</td>`;
     }
   });
-
   row.innerHTML = html;
 }
 
-/** Focus a particular cell. If selectAll=true, highlight existing text. */
-function focusCell(rowId, index, selectAll = false) {
-  const el = document.getElementById(`${rowId}-${index}`);
-  if (el) {
-    el.focus();
-    if (selectAll) el.select();
+/** Rebuild the main table rows for the current numDrives. */
+function rebuildMainTable() {
+  const table = document.getElementById('mainTable');
+  let html = '';
+  for (let d = 0; d < state.numDrives; d++) {
+    html += `<tr id="driveRow${d}"></tr>`;
+  }
+  html += `<tr id="parityRow"></tr>`;
+  table.innerHTML = html;
+}
+
+function renderDriveRows(editable, customClass = '') {
+  for (let d = 0; d < state.numDrives; d++) {
+    renderRow(`driveRow${d}`, driveLabel(d), state.drives[d], editable, customClass);
   }
 }
 
-/** On keydown, if user hits backspace on empty, go back one cell. */
-function handleKeyDown(evt, rowId, index) {
-  const key = evt.key;
-  const inputEl = evt.target;
-  if (key === 'Backspace' && inputEl.value === '') {
-    if (index > 0) {
-      setTimeout(() => {
-        focusCell(rowId, index - 1, true);
-      }, 0);
+function renderParityRow(bits, isInput, customClass = '') {
+  renderRow('parityRow', 'Parity Drive', bits, isInput, customClass);
+}
+
+// ─── Core actions ─────────────────────────────────────────────────────────────
+
+function generateDrives() {
+  state.numDrives = parseInt(document.getElementById('modeSelect').value, 10);
+  state.drives = Array.from({ length: state.numDrives }, () =>
+    Array.from({ length: NUM_BITS }, () => Math.round(Math.random()))
+  );
+  state.parity = [];
+  state.failedDriveIdx = null;
+  state.archivedBits = [];
+  state.drivesGenerated = true;
+  state.parityVerified = false;
+  state.walkthroughActive = false;
+
+  document.getElementById('archiveTable').style.display = 'none';
+  document.getElementById('archiveRow').innerHTML = '';
+  document.getElementById('walkthroughDisplay').textContent = '';
+
+  rebuildMainTable();
+  renderDriveRows(true);
+  renderParityRow(Array(NUM_BITS).fill(''), true);
+
+  updateStepIndicator();
+  updateButtons();
+  setStatus(`Drives generated. Enter XOR values in the Parity row, or click <em>Show XOR Steps</em>.`);
+  focusCell('parityRow', 0);
+
+  if (state.lessonOpen) toggleLesson();
+}
+
+function checkParity() {
+  if (!state.drivesGenerated) {
+    setStatus(`<span class="status-wrong">Please generate drives first.</span>`);
+    return;
+  }
+  for (let i = 0; i < NUM_BITS; i++) {
+    const v = document.getElementById(`parityRow-${i}`)?.value;
+    if (v !== '0' && v !== '1') {
+      setStatus(`<span class="status-wrong">Please enter only 0 or 1 in each parity cell.</span>`);
+      return;
+    }
+  }
+
+  state.parity = computeParity();
+
+  for (let i = 0; i < NUM_BITS; i++) {
+    document.getElementById(`parityRow-${i}`)?.classList.remove('correctInput', 'wrongInput');
+  }
+
+  let allCorrect = true;
+  const userBits = [];
+  state.parity.forEach((trueBit, i) => {
+    const el = document.getElementById(`parityRow-${i}`);
+    const guess = parseInt(el.value, 10);
+    userBits.push(guess);
+    if (guess === trueBit) {
+      el.classList.add('correctInput');
+    } else {
+      el.classList.add('wrongInput');
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    state.parityVerified = true;
+    // Snapshot drive values and lock rows as static
+    snapshotDriveValues();
+    renderDriveRows(false);
+    renderParityRow(userBits, false, 'correctCell');
+    setStatus(`<span class="status-correct">Parity correct! &#10004;</span>`);
+  } else {
+    setStatus(`<span class="status-wrong">Some parity bits are incorrect. Try again.</span>`);
+  }
+
+  updateStepIndicator();
+  updateButtons();
+}
+
+/** Read current drive input values back into state.drives. */
+function snapshotDriveValues() {
+  for (let d = 0; d < state.numDrives; d++) {
+    for (let i = 0; i < NUM_BITS; i++) {
+      const el = document.getElementById(`driveRow${d}-${i}`);
+      if (el) state.drives[d][i] = parseInt(el.value, 10) || 0;
     }
   }
 }
 
-/**
- * If user enters '0' or '1', remove red style & auto-advance. 
- * Otherwise, mark cell text as red.
- */
-function handleFailedInputChange(el) {
-  const val = el.value;
-  const [rowId, idx] = el.id.split('-');
-  const index = parseInt(idx, 10);
+function showXorSteps() {
+  if (!state.drivesGenerated || state.walkthroughActive) return;
 
+  snapshotDriveValues();
+  state.parity = computeParity();
+  state.walkthroughActive = true;
+  updateButtons();
+
+  renderParityRow(Array(NUM_BITS).fill(''), true);
+
+  let col = 0;
+  function step() {
+    if (col >= NUM_BITS) {
+      state.walkthroughActive = false;
+      state.parityVerified = true;
+      snapshotDriveValues();
+      renderDriveRows(false);
+      renderParityRow(state.parity, false, 'correctCell');
+      document.getElementById('walkthroughDisplay').textContent = '';
+      setStatus(`<span class="status-correct">XOR walkthrough complete — parity verified! &#10004;</span>`);
+      updateStepIndicator();
+      updateButtons();
+      return;
+    }
+
+    // Highlight this column across all drive rows
+    for (let d = 0; d < state.numDrives; d++) {
+      const el = document.getElementById(`driveRow${d}-${col}`);
+      if (el) {
+        el.classList.remove('hlCell');
+        void el.offsetWidth; // restart animation
+        el.classList.add('hlCell');
+      }
+    }
+
+    // Show the XOR expression for this bit position
+    const driveBits = state.drives.map(d => d[col]);
+    const expr = driveBits.join(' ^ ') + ' = ' + state.parity[col];
+    document.getElementById('walkthroughDisplay').textContent = `Bit ${col + 1}: ${expr}`;
+
+    // Fill in the parity cell with animation
+    const parityEl = document.getElementById(`parityRow-${col}`);
+    if (parityEl) {
+      parityEl.value = state.parity[col];
+      parityEl.classList.remove('correctInput');
+      void parityEl.offsetWidth;
+      parityEl.classList.add('correctInput');
+    }
+
+    col++;
+    setTimeout(step, 800);
+  }
+
+  step();
+}
+
+function simulateFailure() {
+  if (!state.drivesGenerated) {
+    setStatus(`<span class="status-wrong">Please generate drives first.</span>`);
+    return;
+  }
+  if (!state.parityVerified) {
+    setStatus(`<span class="status-wrong">Please verify your parity first — you'll need it to recover the failed drive.</span>`);
+    return;
+  }
+
+  // Any drive can fail: data drives 0..numDrives-1, or the parity drive
+  const pick = Math.floor(Math.random() * (state.numDrives + 1));
+  state.failedDriveIdx = (pick === state.numDrives) ? 'parity' : pick;
+
+  flashFailure();
+
+  setTimeout(() => {
+    const isParity = state.failedDriveIdx === 'parity';
+    if (isParity) {
+      state.archivedBits = [...state.parity];
+      showArchivedRow('Parity Drive (Original)', state.archivedBits);
+      renderParityRow(Array(NUM_BITS).fill('X'), true, 'failedInput');
+      setStatus(`<span style="color:red;font-size:1.2em;font-weight:bold;">OH NO! The Parity Drive failed. Recover it by XORing all data drives!</span>`);
+      focusCell('parityRow', 0);
+    } else {
+      const idx = state.failedDriveIdx;
+      state.archivedBits = [...state.drives[idx]];
+      showArchivedRow(`${driveLabel(idx)} (Original)`, state.archivedBits);
+      renderRow(`driveRow${idx}`, `${driveLabel(idx)} (Failed)`, Array(NUM_BITS).fill('X'), true, 'failedInput');
+      setStatus(`<span style="color:red;font-size:1.2em;font-weight:bold;">OH NO! ${driveLabel(idx)} failed. Recover it using the remaining drives and parity!</span>`);
+      focusCell(`driveRow${idx}`, 0);
+    }
+    updateStepIndicator();
+    updateButtons();
+  }, 1000);
+}
+
+function flashFailure() {
+  const idx = state.failedDriveIdx;
+  if (idx === 'parity') {
+    renderParityRow(state.parity, false, 'failedCell');
+  } else {
+    renderRow(`driveRow${idx}`, `${driveLabel(idx)} (Failing)`, state.drives[idx], false, 'failedCell');
+  }
+}
+
+function showArchivedRow(label, bits) {
+  const archiveTable = document.getElementById('archiveTable');
+  const archiveRow   = document.getElementById('archiveRow');
+  archiveTable.style.display = '';
+  archiveRow.classList.add('archiveRow');
+  let html = `<td class="driveLabel">${label}<span class="eyeIcon">&#128065;</span></td>`;
+  bits.forEach(b => { html += `<td class="blurred">${b}</td>`; });
+  archiveRow.innerHTML = html;
+}
+
+function checkDriveRecovery() {
+  if (state.failedDriveIdx === null) {
+    setStatus(`<span class="status-wrong">No drive has failed yet!</span>`);
+    return;
+  }
+
+  const isParity = state.failedDriveIdx === 'parity';
+  const rowId    = isParity ? 'parityRow' : `driveRow${state.failedDriveIdx}`;
+
+  for (let i = 0; i < NUM_BITS; i++) {
+    const v = document.getElementById(`${rowId}-${i}`)?.value;
+    if (v !== '0' && v !== '1') {
+      setStatus(`<span class="status-wrong">Please enter only 0 or 1 in each recovery cell.</span>`);
+      return;
+    }
+  }
+
+  for (let i = 0; i < NUM_BITS; i++) {
+    document.getElementById(`${rowId}-${i}`)?.classList.remove('correctInput', 'wrongInput');
+  }
+
+  let allCorrect = true;
+  const recoveredBits = [];
+  for (let i = 0; i < NUM_BITS; i++) {
+    const el    = document.getElementById(`${rowId}-${i}`);
+    const guess = parseInt(el.value, 10);
+    recoveredBits.push(guess);
+    if (guess !== state.archivedBits[i]) {
+      allCorrect = false;
+      el.classList.add('wrongInput');
+    }
+  }
+
+  if (!allCorrect) {
+    setStatus(`<span class="status-wrong">Some bits are incorrect. Try again.</span>`);
+    return;
+  }
+
+  rollingRecoveryHighlight(rowId, recoveredBits, isParity);
+}
+
+function rollingRecoveryHighlight(rowId, recoveredBits, isParity) {
+  document.querySelectorAll('#archiveRow td.blurred').forEach(c => c.classList.remove('blurred'));
+
+  let i = 0;
+  function next() {
+    if (i >= NUM_BITS) {
+      const label = isParity ? 'Parity Drive (Recovered)'
+                             : `${driveLabel(state.failedDriveIdx)} (Recovered)`;
+      if (isParity) {
+        renderParityRow(recoveredBits, false, 'correctCell');
+      } else {
+        renderRow(rowId, label, recoveredBits, false, 'correctCell');
+      }
+      setTimeout(() => {
+        document.getElementById('step4').classList.remove('active');
+        document.getElementById('step4').classList.add('done');
+        const name = isParity ? 'Parity Drive' : driveLabel(state.failedDriveIdx);
+        setStatus(`<span class="status-correct" style="font-size:1.3em;">${name} recovered successfully! &#10004;</span>`);
+      }, 500);
+      return;
+    }
+
+    const inputEl = document.getElementById(`${rowId}-${i}`);
+    if (inputEl) inputEl.classList.add('correctInput');
+
+    const archiveCell = document.querySelectorAll('#archiveRow td')[i + 1];
+    if (archiveCell) {
+      archiveCell.classList.add('correctCell');
+      setTimeout(() => archiveCell.classList.remove('correctCell'), 700);
+    }
+    i++;
+    setTimeout(next, 700);
+  }
+  next();
+}
+
+// ─── UI toggles ───────────────────────────────────────────────────────────────
+
+function toggleLesson() {
+  state.lessonOpen = !state.lessonOpen;
+  document.getElementById('lessonInfo').style.display    = state.lessonOpen ? '' : 'none';
+  document.getElementById('lessonToggle').classList.toggle('closed', !state.lessonOpen);
+}
+
+function toggleDarkMode() {
+  state.darkMode = !state.darkMode;
+  document.documentElement.setAttribute('data-theme', state.darkMode ? 'dark' : '');
+  document.getElementById('darkModeBtn').textContent = state.darkMode ? 'Light Mode' : 'Dark Mode';
+}
+
+// ─── Input event handling (delegated to #mainTable) ───────────────────────────
+
+function handleBitInput(evt) {
+  const el = evt.target;
+  if (!el.classList.contains('bitInput')) return;
+  const val   = el.value;
+  const index = parseInt(el.dataset.index, 10);
+  const rowId = el.dataset.rowid;
   if (val === '0' || val === '1') {
     el.classList.remove('failedInput');
-    el.style.color = 'black';
-    if (index < 7) {
-      focusCell(rowId, index + 1, true);
-    }
+    el.style.color = '';
+    if (index < NUM_BITS - 1) focusCell(rowId, index + 1);
   } else {
     el.classList.add('failedInput');
     el.style.color = 'red';
   }
 }
 
-/** Checks user parity vs. the correct bits. If correct, re-render row with green fade. */
-function checkParity() {
-  const statusDiv = document.getElementById('status');
-
-  if (!drivesGenerated) {
-    statusDiv.innerHTML = `<span class='status-wrong'>Please generate drives first.</span>`;
-    return;
-  }
-
-  // Validate all inputs are 0 or 1 before comparing
-  for (let i = 0; i < 8; i++) {
-    const v = document.getElementById(`parityRow-${i}`)?.value;
-    if (v !== '0' && v !== '1') {
-      statusDiv.innerHTML = `<span class='status-wrong'>Please enter only 0 or 1 in each parity cell.</span>`;
-      return;
-    }
-  }
-
-  let allCorrect = true;
-
-  // Clear old highlights
-  for (let i = 0; i < 8; i++) {
-    const inputEl = document.getElementById(`parityRow-${i}`);
-    if (inputEl) {
-      inputEl.classList.remove('correctInput', 'wrongInput');
-    }
-  }
-
-  // Compare each bit
-  const userBits = [];
-  parity.forEach((trueBit, i) => {
-    const inEl = document.getElementById(`parityRow-${i}`);
-    const guess = parseInt(inEl.value, 10);
-    userBits.push(guess);
-
-    if (guess === trueBit) {
-      inEl.classList.add('correctInput');
-    } else {
-      inEl.classList.add('wrongInput');
-      allCorrect = false;
-    }
-  });
-
-  if (allCorrect) {
-    parityVerified = true;
-    statusDiv.innerHTML = `<span class='status-correct'>Parity correct! &#10004;</span>`;
-    displayBits('parityRow', 'Parity Drive (Verified)', userBits, false, 'correctCell');
-  } else {
-    statusDiv.innerHTML = `<span class='status-wrong'>Some parity bits are incorrect. Try again.</span>`;
+function handleBitKeydown(evt) {
+  const el = evt.target;
+  if (!el.classList.contains('bitInput')) return;
+  if (evt.key === 'Backspace' && el.value === '') {
+    const index = parseInt(el.dataset.index, 10);
+    if (index > 0) setTimeout(() => focusCell(el.dataset.rowid, index - 1), 0);
   }
 }
 
-/** Randomly fail drive 1 or 2, show short red flash, then let the user fix it. */
-function simulateFailure() {
-  if (!drivesGenerated) {
-    document.getElementById('status').innerHTML =
-      `<span class='status-wrong'>Please generate drives first.</span>`;
-    return;
-  }
-  if (!parityVerified) {
-    document.getElementById('status').innerHTML =
-      `<span class='status-wrong'>Please verify your parity first — you'll need it to recover the failed drive.</span>`;
-    return;
-  }
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
-  // pick drive 1 or 2 randomly
-  failedDrive = (Math.random() < 0.5) ? '1' : '2';
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('btnGenerate').addEventListener('click', generateDrives);
+  document.getElementById('btnCheckParity').addEventListener('click', checkParity);
+  document.getElementById('btnWalkthrough').addEventListener('click', showXorSteps);
+  document.getElementById('btnSimFail').addEventListener('click', simulateFailure);
+  document.getElementById('btnCheckRecovery').addEventListener('click', checkDriveRecovery);
+  document.getElementById('darkModeBtn').addEventListener('click', toggleDarkMode);
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('lessonToggle').addEventListener('click', toggleLesson);
 
-  flashRowFailure();
+  // Delegate all bit input events through the main table
+  document.getElementById('mainTable').addEventListener('input', handleBitInput);
+  document.getElementById('mainTable').addEventListener('keydown', handleBitKeydown);
 
-  // after 1 sec, fill the row with X for manual user repair
-  setTimeout(() => {
-    // Show big red failure message
-    document.getElementById('status').innerHTML =
-      `<span style='color:red; font-size:1.2em; font-weight:bold;'>OH NO! Drive ${failedDrive} has just failed. Please recover it using XOR!</span>`;
-
-    if (failedDrive === '1') {
-      failedDriveBits = [...drive1];
-      showArchivedBits('Drive 1 (Original)', failedDriveBits);
-      // Overwrite drive1 with X, let the user fix it
-      displayBits('drive1Row', 'Drive 1 (Failed)', Array(8).fill('X'), true, 'failedInput');
-      focusCell('drive1Row', 0, true);
-    } else {
-      failedDriveBits = [...drive2];
-      showArchivedBits('Drive 2 (Original)', failedDriveBits);
-      displayBits('drive2Row', 'Drive 2 (Failed)', Array(8).fill('X'), true, 'failedInput');
-      focusCell('drive2Row', 0, true);
-    }
-  }, 1000);
-}
-
-/** Show a red flash on the row that fails. */
-function flashRowFailure() {
-  const rowId = (failedDrive === '1') ? 'drive1Row' : 'drive2Row';
-  const bits = (failedDrive === '1') ? drive1 : drive2;
-  displayBits(rowId, `Drive ${failedDrive} (Failing)`, bits, false, 'failedCell');
-}
-
-/** Show original bits in the archive table, blurred if needed. */
-function showArchivedBits(label, bits) {
-  const archiveTable = document.getElementById('archiveTable');
-  const archiveRow = document.getElementById('archiveRow');
-  archiveTable.style.display = '';
-  archiveRow.classList.add('archiveRow');
-
-  let html = `<td class='driveLabel'>${label}<span class='eyeIcon'>&#128065;</span></td>`;
-  bits.forEach((b) => {
-    // optionally blurred if you want
-    html += `<td class='blurred'>${b}</td>`;
-  });
-  archiveRow.innerHTML = html;
-}
-
-/** 
- * Check if user's recovery bits match the archived original. 
- * If correct, do rolling highlight, then success message. Otherwise show error.
- */
-function checkDriveRecovery() {
-  if (!failedDrive) {
-    document.getElementById('status').innerText = 'No drive has failed yet!';
-    return;
-  }
-  const rowId = (failedDrive === '1') ? 'drive1Row' : 'drive2Row';
-  let allCorrect = true;
-  let recoveredBits = [];
-
-  // Validate all inputs are 0 or 1 before comparing
-  for (let i = 0; i < 8; i++) {
-    const v = document.getElementById(`${rowId}-${i}`)?.value;
-    if (v !== '0' && v !== '1') {
-      document.getElementById('status').innerHTML =
-        `<span class='status-wrong'>Please enter only 0 or 1 in each recovery cell.</span>`;
-      return;
-    }
-  }
-
-  // Clear old highlights
-  for (let i = 0; i < 8; i++) {
-    const inputEl = document.getElementById(`${rowId}-${i}`);
-    inputEl?.classList.remove('correctInput', 'wrongInput');
-  }
-
-  // Compare
-  for (let i = 0; i < 8; i++) {
-    const inputEl = document.getElementById(`${rowId}-${i}`);
-    const guess = parseInt(inputEl.value, 10);
-    recoveredBits.push(guess);
-
-    if (guess !== failedDriveBits[i]) {
-      allCorrect = false;
-      inputEl.classList.add('wrongInput');
-    }
-  }
-
-  if (!allCorrect) {
-    document.getElementById('status').innerHTML =
-      `<span class='status-wrong'>Some bits are incorrect. Try again.</span>`;
-    return;
-  }
-
-  // If correct, rolling highlight, then final success message
-  rollingRecoveryHighlight(rowId, recoveredBits);
-}
-
-/**
- * Step-by-step highlight:
- * 1) Unblur archived row
- * 2) For i=0..7, highlight the row cell + archived cell in green (700ms each)
- * 3) Re-render row as static text with green fade
- * 4) Finally show a big green success message
- */
-function rollingRecoveryHighlight(rowId, recoveredBits) {
-  // Unblur archived row
-  const archiveCells = document.querySelectorAll('#archiveRow td.blurred');
-  archiveCells.forEach((cell) => cell.classList.remove('blurred'));
-
-  let i = 0;
-  function highlightNext() {
-    if (i >= 8) {
-      // Re-render row as static with green fade
-      displayBits(rowId, `Drive ${failedDrive} (Recovered)`, recoveredBits, false, 'correctCell');
-      setTimeout(() => {
-        document.getElementById('status').innerHTML =
-          `<span class='status-correct' style='font-size:1.3em;'>Drive ${failedDrive} recovered successfully!</span>`;
-      }, 500);
-      return;
-    }
-
-    const inputEl = document.getElementById(`${rowId}-${i}`);
-    if (inputEl) {
-      inputEl.classList.add('correctInput');
-    }
-    const archiveCell = document.querySelectorAll('#archiveRow td')[i + 1]; 
-    // +1 because label cell is first
-    if (archiveCell) {
-      archiveCell.classList.add('correctCell');
-      setTimeout(() => {
-        archiveCell.classList.remove('correctCell');
-      }, 700);
-    }
-
-    i++;
-    setTimeout(highlightNext, 700);
-  }
-  highlightNext();
-}
+  updateStepIndicator();
+  updateButtons();
+});
 </script>
 
 </body>
