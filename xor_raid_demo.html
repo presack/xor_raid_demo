@@ -240,6 +240,41 @@
       cursor: not-allowed;
     }
 
+    /* Simulate Failure dropdown */
+    .simFailWrapper {
+      position: relative;
+      display: inline-block;
+    }
+    .simFailMenu {
+      position: absolute;
+      top: calc(100% + 2px);
+      left: 0;
+      z-index: 100;
+      background: var(--btn-bg);
+      border: 1px solid var(--btn-border);
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+      min-width: 100%;
+      display: none;
+    }
+    .simFailMenu button {
+      display: block;
+      width: 100%;
+      padding: 8px 16px;
+      background: none;
+      border: none;
+      border-bottom: 1px solid var(--btn-border);
+      color: var(--btn-fg);
+      cursor: pointer;
+      text-align: left;
+      font-family: inherit;
+      font-size: 14px;
+      white-space: nowrap;
+      border-radius: 0;
+    }
+    .simFailMenu button:last-child { border-bottom: none; }
+    .simFailMenu button:hover { background: var(--lesson-bg); }
+
     /* XOR walkthrough status line */
     #walkthroughDisplay {
       margin: 10px auto;
@@ -337,7 +372,10 @@
   <button id="btnGenerate">Generate Drives</button>
   <button id="btnCheckParity"   disabled>Check Parity</button>
   <button id="btnWalkthrough"   disabled>Show XOR Steps</button>
-  <button id="btnSimFail"       disabled>Simulate Drive Failure</button>
+  <div class="simFailWrapper">
+    <button id="btnSimFail" disabled>Simulate Drive Failure &#9660;</button>
+    <div class="simFailMenu" id="simFailMenu"></div>
+  </div>
   <button id="btnCheckRecovery" disabled>Check Drive Recovery</button>
 </div>
 
@@ -483,6 +521,7 @@ function generateDrives() {
   document.getElementById('archiveTable').style.display = 'none';
   document.getElementById('archiveRow').innerHTML = '';
   document.getElementById('walkthroughDisplay').textContent = '';
+  document.getElementById('simFailMenu').style.display = 'none';
 
   rebuildMainTable();
   renderDriveRows(true);
@@ -610,19 +649,29 @@ function showXorSteps() {
   step();
 }
 
-function simulateFailure() {
-  if (!state.drivesGenerated) {
-    setStatus(`<span class="status-wrong">Please generate drives first.</span>`);
-    return;
+function toggleSimFailMenu() {
+  const menu = document.getElementById('simFailMenu');
+  const isOpen = menu.style.display === 'block';
+  if (isOpen) { menu.style.display = 'none'; return; }
+  let html = '';
+  for (let d = 0; d < state.numDrives; d++) {
+    html += `<button data-drive="${d}">${driveLabel(d)}</button>`;
   }
-  if (!state.parityVerified) {
-    setStatus(`<span class="status-wrong">Please verify your parity first — you'll need it to recover the failed drive.</span>`);
-    return;
-  }
+  html += `<button data-drive="parity">Parity Drive</button>`;
+  menu.innerHTML = html;
+  menu.style.display = 'block';
+}
 
-  // Any drive can fail: data drives 0..numDrives-1, or the parity drive
-  const pick = Math.floor(Math.random() * (state.numDrives + 1));
-  state.failedDriveIdx = (pick === state.numDrives) ? 'parity' : pick;
+function handleSimFailMenuClick(evt) {
+  const btn = evt.target.closest('button[data-drive]');
+  if (!btn) return;
+  document.getElementById('simFailMenu').style.display = 'none';
+  const raw = btn.dataset.drive;
+  simulateFailure(raw === 'parity' ? 'parity' : parseInt(raw, 10));
+}
+
+function simulateFailure(idx) {
+  state.failedDriveIdx = idx;
 
   flashFailure();
 
@@ -790,7 +839,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnGenerate').addEventListener('click', generateDrives);
   document.getElementById('btnCheckParity').addEventListener('click', checkParity);
   document.getElementById('btnWalkthrough').addEventListener('click', showXorSteps);
-  document.getElementById('btnSimFail').addEventListener('click', simulateFailure);
+  document.getElementById('btnSimFail').addEventListener('click', toggleSimFailMenu);
+  document.getElementById('simFailMenu').addEventListener('click', handleSimFailMenuClick);
+  document.addEventListener('click', evt => {
+    if (!evt.target.closest('.simFailWrapper')) {
+      document.getElementById('simFailMenu').style.display = 'none';
+    }
+  });
   document.getElementById('btnCheckRecovery').addEventListener('click', checkDriveRecovery);
   document.getElementById('darkModeBtn').addEventListener('click', toggleDarkMode);
   document.getElementById('printBtn').addEventListener('click', () => window.print());
